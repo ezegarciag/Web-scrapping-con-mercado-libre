@@ -9,28 +9,29 @@ import os
 import pandas as pd
 
 
-def obtener_datos_scrapping():
-    string = entrada_producto.get()
+def obtener_datos_scrapping(nombre_producto):
+    string = nombre_producto
     paginas_a_buscar = int(entrada_paginas.get())
 
     busqueda_url = string.replace(" ", "-")
     url = f"https://listado.mercadolibre.com.ar/{busqueda_url}#D[A:{busqueda_url}]"
-    scrapping(url, 1)
+    scrapping(string,url, 1)
 
     desde = 51
     pagina = 2
     for i in range(paginas_a_buscar - 1):
         url = f"https://listado.mercadolibre.com.ar/{string}_Desde_{desde}_NoIndex_True"
-        scrapping(url, pagina)
+        scrapping(string,url, pagina)
         pagina += 1
         desde += 50
 
-    limpia_csv()
-    duplicados()
+    limpia_csv(string)
+    duplicados(string)
     etiqueta_estado.config(text="Scrapping completado y datos procesados con éxito.")
 
 
-def escribe_csv(lista, pagina):
+
+def escribe_csv(nombre,lista, pagina):
     for i in range(len(lista)):
         lista[i] = (lista[i][0], lista[i][1].replace('.', '') if '.' in lista[i][1] else lista[i][1], lista[i][2])
     
@@ -42,7 +43,7 @@ def escribe_csv(lista, pagina):
 
     # Leer el archivo CSV existente si hay uno
     try:
-        existing_df = pd.read_csv('productos.csv', dtype=str)
+        existing_df = pd.read_csv(f'{nombre}.csv', dtype=str)
     except FileNotFoundError:
         existing_df = pd.DataFrame(columns=['producto', 'precio', 'links', 'pagina'])
 
@@ -50,10 +51,10 @@ def escribe_csv(lista, pagina):
     combined_df = pd.concat([existing_df, df], ignore_index=True)
 
     # Escribir el DataFrame en el archivo CSV
-    combined_df.to_csv('productos.csv', index=False, encoding='utf-8', quoting=csv.QUOTE_NONNUMERIC)
+    combined_df.to_csv(f'{nombre}.csv', index=False, encoding='utf-8', quoting=csv.QUOTE_NONNUMERIC)
 
 
-def scrapping(link, pagina):
+def scrapping(nombre,link, pagina):
     r = requests.get(link)
     contenido = r.content
 
@@ -89,13 +90,13 @@ def scrapping(link, pagina):
         lista_links.append(link)
 
     lista_productos_con_precios = list(zip(lista_productos, lista_precios, lista_links))
-    escribe_csv(lista_productos_con_precios, pagina)
+    escribe_csv(nombre,lista_productos_con_precios, pagina)
 
 
-def limpia_csv():
+def limpia_csv(nombre):
     # Leer el archivo CSV
     try:
-        df = pd.read_csv('productos.csv')
+        df = pd.read_csv(f'{nombre}.csv')
     except FileNotFoundError:
         print("El archivo CSV no existe.")
         return
@@ -107,12 +108,12 @@ def limpia_csv():
     df.reset_index(drop=True, inplace=True)
 
     # Escribir el DataFrame limpio de nuevo al archivo CSV
-    df.to_csv('productos.csv', index=False, encoding='utf-8')
+    df.to_csv(f'{nombre}.csv', index=False, encoding='utf-8')
 
 
-def duplicados():
+def duplicados(nombre):
     # Leer el archivo CSV en un DataFrame
-    df = pd.read_csv('productos.csv')
+    df = pd.read_csv(f'{nombre}.csv')
 
     # Encontrar filas duplicadas basadas en la columna 'links'
     duplicados = df.duplicated(subset=['links'], keep=False)
@@ -147,7 +148,7 @@ entrada_paginas = tk.Entry(ventana)
 entrada_paginas.grid(row=1, column=1, padx=5, pady=5)
 
 # Botón para ejecutar el web scrapping
-boton_scrapping = tk.Button(ventana, text="Ejecutar Scrapping", command=obtener_datos_scrapping)
+boton_scrapping = tk.Button(ventana, text="Ejecutar Scrapping", command=lambda: obtener_datos_scrapping(entrada_producto.get()))
 boton_scrapping.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
 
 # Etiqueta para mostrar el estado del proceso
