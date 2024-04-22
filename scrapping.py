@@ -81,8 +81,8 @@ def scrapping(nombre,link, pagina):
         enlace = item.find('a', {'class': 'ui-search-item__group__element ui-search-link__title-card ui-search-link'})
         if enlace:
             link = enlace.get('href')
-        else:
-            print("No se encontró el enlace con la clase especificada.")
+        #else:
+           # print("No se encontró el enlace con la clase especificada.") # no encontro el enlace
 
         # Agregar el nombre y el precio a las listas correspondientes
         lista_productos.append(nombre_producto)
